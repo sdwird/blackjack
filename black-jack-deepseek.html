@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Blackjack</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0e3e1f, #1a5e2c);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .game-title {
+            font-size: 2.5rem;
+            color: gold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .score-item {
+            text-align: center;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            color: gold;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .dealer-area, .player-area {
+            min-height: 180px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .area-title {
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+        
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 120px;
+        }
+        
+        .card {
+            width: 80px;
+            height: 120px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 5px;
+            color: black;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .card.red {
+            color: #e53935;
+        }
+        
+        .card-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .card-suit {
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        
+        .card-top, .card-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .card-bottom {
+            align-items: flex-end;
+            transform: rotate(180deg);
+        }
+        
+        .back {
+            background: linear-gradient(45deg, #c62828, #d50000);
+            background-size: 10px 10px;
+            border: 4px solid white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .back::before {
+            content: "";
+            width: 60px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            position: absolute;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(to right, #ffcc00, #ff9900);
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        #deal-btn {
+            background: linear-gradient(to right, #00c853, #00e676);
+        }
+        
+        #stand-btn {
+            background: linear-gradient(to right, #ff3d00, #ff9100);
+        }
+        
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            min-height: 30px;
+            font-size: 1.2rem;
+            color: gold;
+        }
+        
+        /* Animations */
+        @keyframes dealCard {
+            0% { transform: translateY(-100px) rotate(10deg); opacity: 0; }
+            100% { transform: translateY(0) rotate(0); opacity: 1; }
+        }
+        
+        @keyframes winAnimation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        .deal-animation {
+            animation: dealCard 0.5s ease forwards;
+        }
+        
+        .win-animation {
+            animation: winAnimation 0.5s ease infinite;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: gold;
+            opacity: 0;
+        }
+        
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        
+        .result-modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a5e2c, #0e3e1f);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.5s ease;
+        }
+        
+        .result-modal.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-title {
+            font-size: 2.5rem;
+            color: gold;
+            margin-bottom: 20px;
+        }
+        
+        .modal-message {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 600px) {
+            .card {
+                width: 60px;
+                height: 90px;
+            }
+            
+            .card-value {
+                font-size: 1.2rem;
+            }
+            
+            .card-suit {
+                font-size: 1.4rem;
+            }
+            
+            button {
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1 class="game-title">♠️ Blackjack ♣️</h1>
+        </div>
+        
+        <div class="score-board">
+            <div class="score-item">
+                <div>Balance</div>
+                <div class="score-value" id="balance">$1000</div>
+            </div>
+            <div class="score-item">
+                <div>Bet</div>
+                <div class="score-value" id="bet">$50</div>
+            </div>
+            <div class="score-item">
+                <div>Wins</div>
+                <div class="score-value" id="wins">0</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="dealer-area">
+                <h2 class="area-title">Dealer</h2>
+                <div class="cards-container" id="dealer-cards">
+                    <!-- Cards will be added here -->
+                </div>
+            </div>
+            
+            <div class="player-area">
+                <h2 class="area-title">Player</h2>
+                <div class="cards-container" id="player-cards">
+                    <!-- Cards will be added here -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="deal-btn">Deal</button>
+            <button id="hit-btn" disabled>Hit</button>
+            <button id="stand-btn" disabled>Stand</button>
+            <button id="reset-btn">Reset</button>
+        </div>
+        
+        <div class="message" id="message">Place your bet and click Deal to start!</div>
+    </div>
+    
+    <div class="result-modal" id="result-modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="modal-title">Result</h2>
+            <p class="modal-message" id="modal-message">You win!</p>
+            <button id="play-again">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game variables
+            let balance = 1000;
+            let bet = 50;
+            let wins = 0;
+            let deck = [];
+            let dealerCards = [];
+            let playerCards = [];
+            let gameOver = false;
+            
+            // DOM elements
+            const balanceEl = document.getElementById('balance');
+            const betEl = document.getElementById('bet');
+            const winsEl = document.getElementById('wins');
+            const dealerCardsEl = document.getElementById('dealer-cards');
+            const playerCardsEl = document.getElementById('player-cards');
+            const dealBtn = document.getElementById('deal-btn');
+            const hitBtn = document.getElementById('hit-btn');
+            const standBtn = document.getElementById('stand-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const messageEl = document.getElementById('message');
+            const resultModal = document.getElementById('result-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalMessage = document.getElementById('modal-message');
+            const playAgainBtn = document.getElementById('play-again');
+            
+            // Card suits and values
+            const suits = ['♠', '♥', '♦', '♣'];
+            const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+            
+            // Initialize game
+            function initGame() {
+                updateUI();
+                createDeck();
+            }
+            
+            // Create a deck of cards
+            function createDeck() {
+                deck = [];
+                for (let suit of suits) {
+                    for (let value of values) {
+                        deck.push({ suit, value });
+                    }
+                }
+                shuffleDeck();
+            }
+            
+            // Shuffle the deck
+            function shuffleDeck() {
+                for (let i = deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [deck[i], deck[j]] = [deck[j], deck[i]];
+                }
+            }
+            
+            // Deal initial cards
+            function deal() {
+                if (balance < bet) {
+                    messageEl.textContent = "Not enough balance to bet!";
+                    return;
+                }
+                
+                balance -= bet;
+                gameOver = false;
+                dealerCards = [];
+                playerCards = [];
+                dealerCardsEl.innerHTML = '';
+                playerCardsEl.innerHTML = '';
+                messageEl.textContent = 'Game in progress...';
+                
+                // Deal two cards to player and dealer
+                playerCards.push(dealCard(playerCardsEl));
+                dealerCards.push(dealCard(dealerCardsEl, true)); // First dealer card is hidden
+                playerCards.push(dealCard(playerCardsEl));
+                dealerCards.push(dealCard(dealerCardsEl));
+                
+                // Enable/disable buttons
+                dealBtn.disabled = true;
+                hitBtn.disabled = false;
+                standBtn.disabled = false;
+                
+                // Check for blackjack
+                if (calculateScore(playerCards) === 21) {
+                    endGame("Blackjack! You win!", true);
+                }
+                
+                updateUI();
+            }
+            
+            // Deal a single card
+            function dealCard(container, hidden = false) {
+                if (deck.length === 0) {
+                    createDeck();
+                }
+                
+                const card = deck.pop();
+                const cardEl = document.createElement('div');
+                cardEl.className = `card ${card.suit === '♥' || card.suit === '♦' ? 'red' : ''}`;
+                
+                if (hidden) {
+                    cardEl.className = 'card back';
+                } else {
+                    cardEl.innerHTML = `
+                        <div class="card-top">
+                            <div class="card-value">${card.value}</div>
+                            <div class="card-suit">${card.suit}</div>
+                        </div>
+                        <div class="card-bottom">
+                            <div class="card-value">${card.value}</div>
+                            <div class="card-suit">${card.suit}</div>
+                        </div>
+                    `;
+                }
+                
+                cardEl.style.opacity = '0';
+                container.appendChild(cardEl);
+                
+                // Add deal animation
+                setTimeout(() => {
+                    cardEl.classList.add('deal-animation');
+                }, 100);
+                
+                return card;
+            }
+            
+            // Calculate score of a hand
+            function calculateScore(cards) {
+                let score = 0;
+                let aces = 0;
+                
+                for (let card of cards) {
+                    if (card.value === 'A') {
+                        aces++;
+                        score += 11;
+                    } else if (['K', 'Q', 'J'].includes(card.value)) {
+                        score += 10;
+                    } else {
+                        score += parseInt(card.value);
+                    }
+                }
+                
+                // Adjust for aces
+                while (score > 21 && aces > 0) {
+                    score -= 10;
+                    aces--;
+                }
+                
+                return score;
+            }
+            
+            // Player chooses to hit
+            function hit() {
+                playerCards.push(dealCard(playerCardsEl));
+                const score = calculateScore(playerCards);
+                
+                if (score > 21) {
+                    endGame("Busted! Dealer wins.");
+                } else if (score === 21) {
+                    stand();
+                }
+                
+                updateUI();
+            }
+            
+            // Player chooses to stand
+            function stand() {
+                hitBtn.disabled = true;
+                standBtn.disabled = true;
+                
+                // Reveal dealer's hidden card
+                const hiddenCard = dealerCardsEl.firstChild;
+                hiddenCard.className = `card ${dealerCards[0].suit === '♥' || dealerCards[0].suit === '♦' ? 'red' : ''}`;
+                hiddenCard.innerHTML = `
+                    <div class="card-top">
+                        <div class="card-value">${dealerCards[0].value}</div>
+                        <div class="card-suit">${dealerCards[0].suit}</div>
+                    </div>
+                    <div class="card-bottom">
+                        <div class="card-value">${dealerCards[0].value}</div>
+                        <div class="card-suit">${dealerCards[0].suit}</div>
+                    </div>
+                `;
+                
+                // Dealer draws until score is 17 or higher
+                const dealerDraw = () => {
+                    const dealerScore = calculateScore(dealerCards);
+                    
+                    if (dealerScore < 17) {
+                        setTimeout(() => {
+                            dealerCards.push(dealCard(dealerCardsEl));
+                            dealerDraw();
+                            updateUI();
+                        }, 500);
+                    } else {
+                        determineWinner();
+                    }
+                };
+                
+                dealerDraw();
+            }
+            
+            // Determine the winner
+            function determineWinner() {
+                const playerScore = calculateScore(playerCards);
+                const dealerScore = calculateScore(dealerCards);
+                
+                if (dealerScore > 21) {
+                    endGame("Dealer busted! You win!", true);
+                } else if (dealerScore > playerScore) {
+                    endGame("Dealer wins!");
+                } else if (playerScore > dealerScore) {
+                    endGame("You win!", true);
+                } else {
+                    endGame("It's a push! Bet returned.");
+                    balance += bet; // Return bet
+                }
+            }
+            
+            // End the game
+            function endGame(message, isWin = false) {
+                gameOver = true;
+                messageEl.textContent = message;
+                
+                if (isWin) {
+                    const winAmount = bet * (message === "Blackjack! You win!" ? 2.5 : 2);
+                    balance += winAmount;
+                    wins++;
+                    showResultModal("You Win!", `Congratulations! You won $${winAmount}`);
+                    createConfetti();
+                } else {
+                    showResultModal("Game Over", message);
+                }
+                
+                dealBtn.disabled = false;
+                hitBtn.disabled = true;
+                standBtn.disabled = true;
+                
+                updateUI();
+            }
+            
+            // Show result modal
+            function showResultModal(title, message) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                resultModal.classList.add('show');
+            }
+            
+            // Create confetti animation
+            function createConfetti() {
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = ['gold', 'red', 'green', 'blue', 'white'][Math.floor(Math.random() * 5)];
+                    confetti.style.width = (5 + Math.random() * 10) + 'px';
+                    confetti.style.height = (5 + Math.random() * 10) + 'px';
+                    document.body.appendChild(confetti);
+                    
+                    // Animate confetti
+                    confetti.style.animation = `confetti ${1 + Math.random() * 2}s linear forwards`;
+                    
+                    // Remove confetti after animation
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }
+            }
+            
+            // Update UI elements
+            function updateUI() {
+                balanceEl.textContent = `$${balance}`;
+                betEl.textContent = `$${bet}`;
+                winsEl.textContent = wins;
+                
+                // Update scores if game is in progress
+                if (playerCards.length > 0 && !gameOver) {
+                    const playerScore = calculateScore(playerCards);
+                    const dealerScore = calculateScore([dealerCards[1]]); // Only show second card score for dealer
+                    
+                    document.querySelector('.player-area .area-title').textContent = `Player (${playerScore})`;
+                    document.querySelector('.dealer-area .area-title').textContent = `Dealer (${dealerScore})`;
+                } else if (gameOver) {
+                    const playerScore = calculateScore(playerCards);
+                    const dealerScore = calculateScore(dealerCards);
+                    
+                    document.querySelector('.player-area .area-title').textContent = `Player (${playerScore})`;
+                    document.querySelector('.dealer-area .area-title').textContent = `Dealer (${dealerScore})`;
+                } else {
+                    document.querySelector('.player-area .area-title').textContent = 'Player';
+                    document.querySelector('.dealer-area .area-title').textContent = 'Dealer';
+                }
+            }
+            
+            // Reset game
+            function resetGame() {
+                balance = 1000;
+                bet = 50;
+                wins = 0;
+                dealerCards = [];
+                playerCards = [];
+                dealerCardsEl.innerHTML = '';
+                playerCardsEl.innerHTML = '';
+                messageEl.textContent = 'Place your bet and click Deal to start!';
+                dealBtn.disabled = false;
+                hitBtn.disabled = true;
+                standBtn.disabled = true;
+                updateUI();
+            }
+            
+            // Event listeners
+            dealBtn.addEventListener('click', deal);
+            hitBtn.addEventListener('click', hit);
+            standBtn.addEventListener('click', stand);
+            resetBtn.addEventListener('click', resetGame);
+            playAgainBtn.addEventListener('click', () => {
+                resultModal.classList.remove('show');
+            });
+            
+            // Initialize the game
+            initGame();
+        });
+    </script>
+</body>
+</html>
